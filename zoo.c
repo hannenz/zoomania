@@ -144,8 +144,8 @@ void title_screen(void){
 //		memset((char*)0xcea8,0xff,40);
 		fill();
 		revers(1);
-		textcolor(1);cputsxy(12,18,	"one player game");
-		textcolor(2);cputsxy(12,19,	"two player team");
+		textcolor(1); cputsxy(12,18,	"one player game");
+		textcolor(2); cputsxy(12,19,	"two player team");
 		textcolor(7); cputsxy(11,20,	"two player battle");
 		textcolor(2); cputsxy(15,21,	"highscores");
 //		textcolor(1); cputsxy(18,22,	"demo");

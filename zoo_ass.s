@@ -49,7 +49,6 @@
 			sty $3005 + char*8
 			.endmacro
 
-
 			joy_speed = 4;
 
 			.import popax
@@ -58,21 +57,26 @@
 			;include data (charsets, sprites, msx)
 
 			.export _colortab,_highscore,_matrix
+
+
 			.segment "DAT"
 			.incbin "zoo.dat",2
-
-_colortab:		.byte 1,1,2,5,6,4,7,3
-_highscore:		.res 160
-_matrix:		.res 64
+_colortab:	.byte 1,1,2,5,6,4,7,3
+_highscore:	.res 160
+_matrix:	.res 64
 			.export _bmp_data
+
+
 			.segment "RODATA"
-_bmp_data:		.incbin "zootitle.pic"
+_bmp_data:	.incbin "zootitle.pic"
+
+
 			.segment "CODE"
 ;---------------------------------------------
 ;void __fastcall__ init_msx(unsigned char);
 ;---------------------------------------------
 			.export _init_msx;
-_init_msx:		jmp $1000
+_init_msx:	jmp $1000
 
 ;---------------------------------------------------
 ;void init_irq(void);
@@ -655,7 +659,7 @@ docol:			pha
 ;---------------------------------------------
 			.export _setgfx
 
-_setgfx:		ldx #4
+_setgfx:	ldx #4
 			ldy #0
 			sty d1
 			asl
@@ -667,7 +671,7 @@ _setgfx:		ldx #4
 			lsr
 			lsr
 			ldx #4
-loop1:			asl tmp
+loop1:		asl tmp
 			rol
 			dex
 			bne loop1
