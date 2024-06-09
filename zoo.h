@@ -16,7 +16,7 @@
 #define TIME_BONUS 2
 
 #define fire_up 110
-#define fire_down 109
+#define fire_down 110
 #define fire_left 107
 #define fire_right 103
 #define fire 111

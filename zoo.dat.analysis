@@ -1,0 +1,8 @@
+zoo.dat analysis
+
+$0000-$0001		$0002	Load address/ unused
+$0002-$0242		$0240	Sprites	(9 Sprites, 8 animals, 1 cursor)
+$0242-$1ADF		$189E	$Music data
+$1AE0-$1E41		$0362	Padded with zero
+$1E42-$3241		$1400	??
+

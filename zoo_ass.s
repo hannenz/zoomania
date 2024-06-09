@@ -59,13 +59,17 @@
 			.export _colortab,_highscore,_matrix
 
 
+			; Include data (music and graphics)
+			; skip the first two bytes (load address)
+			; .segment DAT is at 0x0dc0 (?)
 			.segment "DAT"
 			.incbin "zoo.dat",2
+
 _colortab:	.byte 1,1,2,5,6,4,7,3
 _highscore:	.res 160
 _matrix:	.res 64
-			.export _bmp_data
 
+			.export _bmp_data
 
 			.segment "RODATA"
 _bmp_data:	.incbin "zootitle.pic"
@@ -659,24 +663,29 @@ docol:			pha
 ;---------------------------------------------
 			.export _setgfx
 
-_setgfx:	ldx #4
+_setgfx:	ldx #4		; is this "hardcoded" hi-byte of the __AX__ ??
 			ldy #0
 			sty d1
+			; d1 = 0
+			; tmp = .A * 4
 			asl
 			rol d1
 			asl
 			rol d1
 			sta tmp
-			txa
+
+			txa		; #4
 			lsr
-			lsr
+			lsr		; .X / 4
 			ldx #4
-loop1:		asl tmp
+loop1:		asl tmp		; tmp *= 8
 			rol
 			dex
 			bne loop1
 			sta $d018
-			lda $dd00
+
+			; Select VIC Bank
+			lda $dd00		
 			and #$fc
 			ora d1
 			eor #3
@@ -688,7 +697,7 @@ loop1:		asl tmp
 ;---------------------------------------------
 			.export _wait
 
-_wait:			cmp $d012
+_wait:		cmp $d012
 			bne _wait
 			rts
 ;---------------------------------------------
@@ -696,7 +705,7 @@ _wait:			cmp $d012
 ;---------------------------------------------
 			.export _random
 
-_random:		lda #0
+_random:	lda #0
 			eor $dc04
 			eor $dc05
 			eor $dd04
@@ -711,21 +720,21 @@ _random:		lda #0
 ;---------------------------------------------
 			.export _pet2scr
 
-_pet2scr:		eor #$e0
+_pet2scr:	eor #$e0
 			clc
 			adc #$20
 			bpl cont
 			adc #$40
 			bpl cont
 			eor #$a0
-cont:			rts
+cont:		rts
 
 ;------------------------------------------------
 ;unsigned char isstop(void)
 ;------------------------------------------------
 			.export _isstop
 
-_isstop:		lda #$7f
+_isstop:	lda #$7f
 			sta $dc00
 			cmp $dc01
 			beq no
@@ -739,7 +748,8 @@ no:			lda #0
 ;----------------------------------------------------
 			.export _wait_for_key_or_joy
 
-_wait_for_key_or_joy:	lda _demo
+_wait_for_key_or_joy:
+			lda _demo
 			bne @exit
 			lda $dc00
 			cmp #111
@@ -1533,7 +1543,7 @@ _save_hs:		jmp (_save_vector)
 ;---------------------------------------------------------------------------------
 			.export _yesno
 
-_yesno:			jsr $ffe4
+_yesno:		jsr $ffe4
 			cmp #'l'
 			beq ys_yes
 			cmp #'r'
