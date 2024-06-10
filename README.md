@@ -1,6 +1,16 @@
-#Zoo Mania
+```
+|__  / _ \ / _ \  |  \/  |  / \  | \ | |_ _|  / \   
+  / / | | | | | | | |\/| | / _ \ |  \| || |  / _ \  
+ / /| |_| | |_| | | |  | |/ ___ \| |\  || | / ___ \ 
+/____\___/ \___/  |_|  |_/_/   \_\_| \_|___/_/   \_\
+                                                    
+ZOO MANIA
+```
 
-After having left the C64 some years ago I recently came back to see if this old project would still compile and decided to put this here on github.
+![screenplay.gif](screenplay.gif)
+
+
+After having left the C64 some years ago I recently came back to see if this old project would still compile and decided to put this here on codeberg.
 
 ## What is it?
 
