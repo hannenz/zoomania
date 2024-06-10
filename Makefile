@@ -6,13 +6,18 @@
 # @version 2024-06-09
 # ----------------------------------------------
 PRG:=zoo.prg
-OBJECTS:=zoo.o zoo_ass.o
+OBJECTS:=src/zoo.o src/zoo_ass.o
 CC:=cc65
 CA:=ca65
 LD:=ld65
+CONFIG:=conf/zoo.cfg
+DISKIMAGE:=zoo.d64
+HISCOREFILE:=data/zoo.hi
 
-$(PRG): $(OBJECTS) zoo.cfg
-	$(LD) -Ln zoo.lbl -o $@ -C zoo.cfg $(OBJECTS) c64.lib
+all: $(PRG) $(DISKIMAGE)
+
+$(PRG): $(OBJECTS) $(CONFIG)
+	$(LD) -Ln zoo.lbl -o $@ -C $(CONFIG) $(OBJECTS) c64.lib
 
 # Disable (cancel) make's implicit rule
 %.o: %.c
@@ -32,8 +37,18 @@ $(PRG): $(OBJECTS) zoo.cfg
 	$(CC) -g -t c64 -o $@ $<
 
 
+# Write program and highscore file on a disk image
+$(DISKIMAGE): $(PRG) $(HISCOREFILE)
+	rm -rf $(DISKIMAGE)
+	c1541 -format "zoo mania 2024",2a d64 $(DISKIMAGE)
+	c1541 $(DISKIMAGE) -write $(PRG)
+	c1541 $(DISKIMAGE) -write $(HISCOREFILE)
+
+
+
 PHONY: clean
 clean:
 	rm -rf $(OBJECTS)
 	rm -rf $(PRG)
+	rm -rf $(DISKIMAGE)
 	rm -rf zoo.lbl

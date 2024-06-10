@@ -63,7 +63,7 @@
 			; skip the first two bytes 
 			; .segment DAT is at 0x0dc0 
 			.segment "DAT"
-			.incbin "zoo.dat",2
+			.incbin "data/zoo.dat",2
 
 _colortab:	.byte 1,1,2,5,6,4,7,3
 _highscore:	.res 160
@@ -72,7 +72,7 @@ _matrix:	.res 64
 			.export _bmp_data
 
 			.segment "RODATA"
-_bmp_data:	.incbin "zootitle.pic"
+_bmp_data:	.incbin "data/zootitle.pic"
 
 
 			.segment "CODE"
