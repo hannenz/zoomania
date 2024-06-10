@@ -60,8 +60,8 @@
 
 
 			; Include data (music and graphics)
-			; skip the first two bytes (load address)
-			; .segment DAT is at 0x0dc0 (?)
+			; skip the first two bytes 
+			; .segment DAT is at 0x0dc0 
 			.segment "DAT"
 			.incbin "zoo.dat",2
 
@@ -749,6 +749,7 @@ no:			lda #0
 			.export _wait_for_key_or_joy
 
 _wait_for_key_or_joy:
+	rts
 			lda _demo
 			bne @exit
 			lda $dc00

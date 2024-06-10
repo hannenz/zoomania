@@ -1,13 +1,16 @@
-
-/*
+/**
+ * zoo.c
+ *
+ * @author Johannes Braun <johannes.braun@swu.de>
+ * @package zoo
+ * @version 2024-06-09
+ *
  * TO DO:
  * 
- * missing tune
- * zeigt letzten zug falsch an!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * kernal mssg bei load abschalten!
- * 
+ * - missing tune
+ * - zeigt letzten zug falsch an!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * - kernal mssg bei load abschalten!
  */
-
 #include "zoo.h"
 #define LINES 17
 
@@ -140,7 +143,10 @@ void title_screen(void){
 		init_msx(2);
 		title_irq();
 		cursor_off();
+
+		// Set Color RAM from data
 		memmove((char*)0xd800,(char*)(&bmp_data + LINES*40 + LINES*320),LINES*40);
+
 //		memset((char*)0xcea8,0xff,40);
 		fill();
 		revers(1);
@@ -502,8 +508,12 @@ void main(void){
 
 	while (1){
 		ass_setup();
+
+		// Copy Bitmap Data to $E000
 		memmove((char*)0xe000,&bmp_data,LINES*320);
+		// Copy color data (???) to $CC00
 		memmove((char*)0xcc00,(char*)(&bmp_data + LINES*320),LINES*40);
+
 		title_screen();
 
 		memset((char*)0xdbc0,15,40);

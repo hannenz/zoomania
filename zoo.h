@@ -7,6 +7,7 @@
 #include <conio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <_vic2.h>
 
 #define EMPTY_SYMB 0xff
 #define JOKER_SYMB 0xb0
