@@ -8,78 +8,85 @@
 ;3			level up
 ;4			time out
 ;5			hi score
+;---------------------------------------------------------------------------------------
+.export __check_matrix
+.export _appear
+.export _ass_setup
+.export _bmp_data
+.export _broesel
+.export _check_moves
+.export _clone
+.export _colortab,_highscore,_matrix
+.export _cue,_cue_max,_demo,_pl, _team, _tt
+.export _cursor_on,_cursor_off
+.export _delay
+.export _display_time
+.export _do_bar
+.export _fill
+.export _fill_matrix
+.export _fld
+.export _fld_done
+.export _game_irq
+.export _get_random_symb
+.export _getfromcue
+.export _getkey
+.export _gfx_mode
+.export _init_msx;
+.export _interrupt_handler
+.export _isstop
+.export _key,_timer_delay,_stop,_time_out,_joker_tmp,_joker,_animals,_level
+.export _kill_joker
+.export _load_hs
+.export _load_vector,_save_vector,_time1,_players,_joker_x,_joker_y
+.export _move_matrix
+.export _pet2scr
+.export _plot2x2_xy
+.export _plot_score
+.export _pm_x1,_pm_x2,_pm_y1,_pm_y2
+.export _print2x2_centered
+.export _print3x3
+.export _put2cue
+.export _random
+.export _save_hs
+.export _screen_off, _screen_on
+.export _setgfx
+.export _title_irq
+.export _txt_mode
+.export _wait
+.export _wait_for_key_or_joy
+.export _xpos1,_xpos2,_ypos1,_ypos2,_xdir1,_xdir2,_ydir1,_ydir2
+.export _yesno
 
-			.macro jeq adr
-			bne *+5
-			jmp adr
-			.endmacro
-
-			.macro jne adr
-			beq *+5
-			jmp adr
-			.endmacro
-
-			.macro jmi adr
-			bpl *+5
-			jmp adr
-			.endmacro
-
-			.macro jpl adr
-			bmi *+5
-			jmp adr
-			.endmacro
-
-			.macro jcc adr
-			bcs *+5
-			jmp adr
-			.endmacro
-			.macro jcs adr
-			bcc *+5
-			jmp adr
-			.endmacro
-
-			.macro rotate char
-			ldy $3002 + char*8
-			ldx #2
-:			lda $3001 + char*8,x
-			sta $3000 + char*8,x
-			inx
-			cpx #6
-			bne :-
-			sty $3005 + char*8
-			.endmacro
-
-			joy_speed = 4;
-
-			.import popax
-			.import popa
-
+; ---------------------------------------------------------------
+			; include symbols for common c64 locations
+			.include "c64.inc"
+			.include "macros.inc"
+; ---------------------------------------------------------------
+			.segment "DAT"
+; ---------------------------------------------------------------
 			;include data (charsets, sprites, msx)
-
-			.export _colortab,_highscore,_matrix
-
-
-			; Include data (music and graphics)
 			; skip the first two bytes 
 			; .segment DAT is at 0x0dc0 
-			.segment "DAT"
-			.incbin "data/zoo.dat",2
+			.incbin "data/zoo.dat", 2
 
 _colortab:	.byte 1,1,2,5,6,4,7,3
 _highscore:	.res 160
 _matrix:	.res 64
 
-			.export _bmp_data
 
+; ---------------------------------------------------------------
 			.segment "RODATA"
-_bmp_data:	.incbin "data/zootitle.pic"
+; ---------------------------------------------------------------
+_bmp_data:	.incbin "data/zootitle2.kla", 2
 
 
+; ---------------------------------------------------------------
 			.segment "CODE"
+; ---------------------------------------------------------------
+
 ;---------------------------------------------
 ;void __fastcall__ init_msx(unsigned char);
 ;---------------------------------------------
-			.export _init_msx;
 _init_msx:	jmp $1000
 
 ;---------------------------------------------------
@@ -87,22 +94,21 @@ _init_msx:	jmp $1000
 ;---------------------------------------------------
 ;inits the irq running in-game
 
-			.export _game_irq
 
 _game_irq:	sei
 			lda #<_interrupt_handler
 			ldx #>_interrupt_handler
 			ldy #0
-			sta $314
-			stx $315
-			sty $d012
-			asl $d019
+			sta IRQVec
+			stx IRQVec + 1
+			sty VIC_HLINE
+			asl VIC_IRR
 			lda #$18
-			sta $d016
+			sta VIC_CTRL2
 			lda #0
-			sta $d021
+			sta VIC_BG_COLOR0
 			lda #$1b
-			sta $d011
+			sta VIC_CTRL1
 			cli
 			rts
 ;---------------------------------------------------
@@ -110,7 +116,6 @@ _game_irq:	sei
 ;---------------------------------------------------
 ;little fld when scrolling out the main menu screen
 
-			.export _fld
 
 _fld:		sei
 			asl
@@ -118,7 +123,7 @@ _fld:		sei
 			asl
 			clc
 			adc #$33	;line*8 + $33, start of fld
-			sta $d012
+			sta VIC_HLINE
 			sta fld_line+1
 			lda #255
 			sec
@@ -128,36 +133,36 @@ _fld:		sei
 			lda #$28
 			jsr _setgfx
 			ldx #0
-			stx $d016
-			stx $d021
+			stx VIC_CTRL2
+			stx VIC_BG_COLOR0
 			stx _fld_done
 			inx
 			stx fld+1
 			lda #<fld
 			ldx #>fld
-			sta $314
-			stx $315
+			sta IRQVec
+			stx IRQVec + 1
 			lda #$1b
-			sta $d011
-			asl $d019
+			sta VIC_CTRL1
+			asl VIC_IRR
 			cli
 			rts
 
 fld:		ldx #1
-@loop:		lda $d012
-			cmp $d012
+@loop:		lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
 			and #7
 			ora #$10
-			sta $d011
+			sta VIC_CTRL1
 			dex
 			bne @loop
 
 			lda #8
-			ldx $d012
-			cpx $d012
+			ldx VIC_HLINE
+			cpx VIC_HLINE
 			beq *-3
-			sta $d021
+			sta VIC_BG_COLOR0
 
 			asl fld+1
 			lda fld+1
@@ -165,21 +170,21 @@ fld:		ldx #1
 			bcc @skip
 			sta _fld_done
 			lda #0
-			sta $d020
+			sta VIC_BORDERCOLOR
 
-@skip:			asl $d019
+@skip:			asl VIC_IRR
 			lda #<fld1
 			ldx #>fld1
 			ldy #255
 			jmp out1
 
 fld1:			lda #$1b
-			sta $d011
+			sta VIC_CTRL1
 			lda #0
-			sta $d021
+			sta VIC_BG_COLOR0
 
 			jsr $1003
-			asl $d019
+			asl VIC_IRR
 			lda #<fld
 			ldx #>fld
 fld_line:		ldy #0
@@ -190,26 +195,25 @@ fld_line:		ldy #0
 ;---------------------------------------------------
 ;setup the irq runnnig in the main menu screen
 
-			.export _title_irq
 
 _title_irq:		sei
 			lda #$7f
-			sta $dc0d
-			sta $dd0d
-			lda $dc0d
-			lda $dd0d
+			sta CIA1_ICR
+			sta CIA2_ICR
+			lda CIA1_ICR
+			lda CIA2_ICR
 			lda #1
-			sta $d01a
+			sta VIC_IMR
 			lda #$1b
-			sta $d011
+			sta VIC_CTRL1
 
 			lda #<title_irq
 			ldx #>title_irq
 			ldy #$fa
-			sta $314
-			stx $315
-			sty $d012
-			asl $d019
+			sta IRQVec
+			stx IRQVec + 1
+			sty VIC_HLINE
+			asl VIC_IRR
 			lda #<(scroll_text-1)
 			ldx #>(scroll_text-1)
 			sta $7a
@@ -221,12 +225,12 @@ _inter_irq:		sei
 			lda #<irq_x
 			ldx #>irq_x
 			ldy #$c2
-			sta $314
-			stx $315
-			sty $d012
+			sta IRQVec
+			stx IRQVec + 1
+			sty VIC_HLINE
 			lda #$1b
-			sta $d011
-			asl $d019
+			sta VIC_CTRL1
+			asl VIC_IRR
 			cli
 			rts
 ;---------------------------------------------------
@@ -234,42 +238,41 @@ _inter_irq:		sei
 ;---------------------------------------------------
 ;in-game irq routine
 
-			.export _interrupt_handler
 
 _interrupt_handler:	;jsr __game_interrupt
 			;jmp $ea31
 
-__game_interrupt:	asl $d019		;acknoledge raster irq
+__game_interrupt:	asl VIC_IRR		;acknoledge raster irq
 
 			lda count
 			beq get_joy
 
-			lda $d00e		;move cursor
+			lda VIC_SPR7_X		;move cursor
 			clc
 			adc _xdir1
-			sta $d00e
-			lda $d00f
+			sta VIC_SPR7_X
+			lda VIC_SPR7_Y
 			clc
 			adc _ydir1
-			sta $d00f
+			sta VIC_SPR7_Y
 
 			lda _players
 			beq @skip
 
-			lda $d00c
+			lda VIC_SPR6_X
 			clc
 			adc _xdir2
-			sta $d00c
-			lda $d00d
+			sta VIC_SPR6_X
+			lda VIC_SPR6_Y
 			clc
 			adc _ydir2
-			sta $d00d
+			sta VIC_SPR6_Y
 
 @skip:			dec count
 			jmp timer
 
 get_joy:		ldy _tt
-			lda $dc00,y		;get joystick
+			lda CIA1,y		;get joystick
 			and #$7f
 
 			ldx _demo		;if in demo mode get movement from cue
@@ -331,7 +334,7 @@ get_joy:		ldy _tt
 get_joy2:		lda _players		;only one player?
 			beq timer		;then skip this...
 
-			lda $dc01		;check joy#2, see above
+			lda CIA1_PRB		;check joy#2, see above
 			ldx #0
 
 			cmp #254
@@ -505,13 +508,12 @@ skip_rotate:		jmp $ea31
 
 ;draw the timer bar
 
-.export _display_time
 _display_time:		lda _time_out
 			bne done
 			lda _time1
 			ldx _time1+1
 			stx aux		;.A still has time1 lo byte
-			lsr aux		;time1 is max. 319, so max. 1 bit set in Hibyte
+			lsr aux		;time1 is max. NMIVec + 1, so max. 1 bit set in Hibyte
 			ror		;rotate right over 3 bytes (Hi,Lo,Remainder)
 			ror rem
 			lsr		;rotate right over 2 Bytes (Lo,Remainder)
@@ -538,7 +540,6 @@ done:			rts
 ;---------------------------------------------------------------------------------
 ;void print2x2_centered (char *string,char color1,char color2,char line);
 ;---------------------------------------------------------------------------------
-			.export _print2x2_centered
 
 _print2x2_centered:	sta line		;line
 			jsr popa
@@ -585,7 +586,6 @@ p2x2_done:		rts
 ;---------------------------------------------------------------------------------
 ;void __fastcall__ plot2x2_xy (char c,char x,char y,char color1,char color2);
 ;---------------------------------------------------------------------------------
-			.export _plot2x2_xy
 
 _plot2x2_xy:		sta color2	;store 'low' color
 			jsr popa	;get 'high' color
@@ -661,7 +661,6 @@ docol:			pha
 ;---------------------------------------------
 ;void __fastcall__ setgfx(unsigned int);
 ;---------------------------------------------
-			.export _setgfx
 
 _setgfx:	ldx #4		; is this "hardcoded" hi-byte of the __AX__ ??
 			ldy #0
@@ -682,43 +681,40 @@ loop1:		asl tmp		; tmp *= 8
 			rol
 			dex
 			bne loop1
-			sta $d018
+			sta VIC_VIDEO_ADR
 
 			; Select VIC Bank
-			lda $dd00		
+			lda CIA2_PRA		
 			and #$fc
 			ora d1
 			eor #3
-			sta $dd00
+			sta CIA2_PRA
 			rts
 
 ;---------------------------------------------
 ;void __fastcall__ wait(unsigned char raster);
 ;---------------------------------------------
-			.export _wait
 
-_wait:		cmp $d012
+_wait:		cmp VIC_HLINE
 			bne _wait
 			rts
 ;---------------------------------------------
 ;unsigned char random(void);
 ;---------------------------------------------
-			.export _random
 
 _random:	lda #0
-			eor $dc04
-			eor $dc05
-			eor $dd04
-			eor $dd05
-			eor $dd06
-			eor $dd07
+			eor CIA1_TA
+			eor CIA1_TA + 1
+			eor CIA2_TA
+			eor CIA2_TA + 1
+			eor CIA2_TB
+			eor CIA2_TB + 1
 			sta _random+1
 			rts
 
 ;---------------------------------------------
 ;unsigned char __fastcall__ pet2scr(unsigned char);
 ;---------------------------------------------
-			.export _pet2scr
 
 _pet2scr:	eor #$e0
 			clc
@@ -732,11 +728,10 @@ cont:		rts
 ;------------------------------------------------
 ;unsigned char isstop(void)
 ;------------------------------------------------
-			.export _isstop
 
 _isstop:	lda #$7f
-			sta $dc00
-			cmp $dc01
+			sta CIA1
+			cmp CIA1_PRB
 			beq no
 			lda #1
 			rts
@@ -746,16 +741,15 @@ no:			lda #0
 ;----------------------------------------------------
 ;void wait_for_key_or_joy(void);
 ;----------------------------------------------------
-			.export _wait_for_key_or_joy
 
 _wait_for_key_or_joy:
 	rts
 			lda _demo
 			bne @exit
-			lda $dc00
+			lda CIA1_PRA
 			cmp #111
 			beq @exit
-			lda $dc01
+			lda CIA1_PRB
 			cmp #239
 			bne _wait_for_key_or_joy
 @exit:			rts
@@ -763,7 +757,6 @@ _wait_for_key_or_joy:
 ;--------------------------------------------------------------
 ;unsigned char _check_matrix(void);
 ;--------------------------------------------------------------
-			.export __check_matrix
 __check_matrix:
 			;first we check horizontally
 
@@ -820,53 +813,53 @@ __check_matrix:
 
 ;-----------------------------------------------------------------------
 title_irq:		ldx #1
-			lda $d012
-			cmp $d012
+			lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
 
-			stx $d021
+			stx VIC_BG_COLOR0
 
 			lda #$f0
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
 
 			dec scroll
 			dec scroll
 			lda scroll
 			and #7
-			sta $d016
+			sta VIC_CTRL2
 
-			lda $d012
-			cmp $d012
+			lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
 
 			ldx #7
 barlp:			lda barcolor_tab,x
-			ldy $d012
-			cpy $d012
+			ldy VIC_HLINE
+			cpy VIC_HLINE
 			beq *-3
-			sta $d021
+			sta VIC_BG_COLOR0
 			dex
 			bpl barlp
 
 			lda #$fc
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
 			lda #0
-			sta $d021
-			sta $d016
+			sta VIC_BG_COLOR0
+			sta VIC_CTRL2
 
-			asl $d019
+			asl VIC_IRR
 
 			lda #0
-			sta $dd00
+			sta CIA2_PRA
 			lda #$38
-			sta $d018
-			lda $d011
+			sta VIC_VIDEO_ADR
+			lda VIC_CTRL1
 			ora #$20
-			sta $d011
+			sta VIC_CTRL1
 			lda #$10
-			sta $d016
+			sta VIC_CTRL2
 			jsr $1003
 
 			dec bar_delay
@@ -921,9 +914,9 @@ okok1:			jsr _pet2scr
 out2:			lda #<title_irq2
 			ldx #>title_irq2
 			ldy #$ba - 2
-out1:			sta $314
-			stx $315
-			sty $d012
+out1:			sta IRQVec
+			stx IRQVec + 1
+			sty VIC_HLINE
 out3:			pla
 			tay
 			pla
@@ -934,39 +927,39 @@ out3:			pla
 
 
 title_irq2:		ldx #1
-			lda $d012
-			cmp $d012
+			lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
-			stx $d021
+			stx VIC_BG_COLOR0
 			ldx #$1b
-			lda $d012
-			cmp $d012
+			lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
-			stx $d011
+			stx VIC_CTRL1
 			dex
-			stx $d018
+			stx VIC_VIDEO_ADR
 			ldx #3
-			lda $d012
-			cmp $d012
+			lda VIC_HLINE
+			cmp VIC_HLINE
 			beq *-3
-			stx $dd00
+			stx CIA2_PRA
 
 			ldx #8
 			lda #$bc
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
-			stx $d021
+			stx VIC_BG_COLOR0
 
 			lda #0
-			sta $d016
+			sta VIC_CTRL2
 
-			asl $d019
+			asl VIC_IRR
 			lda #<title_irq
 			ldx #>title_irq
 			ldy #$f0 - 1
-			sta $314
-			stx $315
-			sty $d012
+			sta IRQVec
+			stx IRQVec + 1
+			sty VIC_HLINE
 			jmp out1
 ;---------------------------------------------------------------------------------
 ;void ass_setpu(void)
@@ -978,7 +971,6 @@ nmi:			pha
 			pla
 			rti
 
-			.export _ass_setup
 
 _ass_setup:
 ;			jsr $ff8a	;restore Vectors
@@ -986,32 +978,32 @@ _ass_setup:
 
 			lda #<nmi
 			ldx #>nmi
-			sta $318
-			stx $319
+			sta NMIVec
+			stx NMIVec + 1
 
 			lda #11
-			sta $d022
-			sta $d025
+			sta VIC_BG_COLOR1
+			sta VIC_SPR_MCOLOR0
 			lda #8
-			sta $d023
-			sta $d026
+			sta VIC_BG_COLOR2
+			sta VIC_SPR_MCOLOR1
 			ldx #2
-			stx $d02d
+			stx VIC_SPR6_COLOR
 			dex
-			stx $d02e
+			stx VIC_SPR7_COLOR
 			dex
-			stx $d020
-			stx $d021
+			stx VIC_BORDERCOLOR
+			stx VIC_BG_COLOR0
 			dex
-			stx $d01c
+			stx VIC_SPR_MCOLOR
 			lda #39
 			ldx #50
-			sta $d00e
-			stx $d00f
+			sta VIC_SPR7_X
+			stx VIC_SPR7_Y
 			clc
 			adc #24
-			sta $d00c
-			stx $d00d
+			sta VIC_SPR6_X
+			stx VIC_SPR6_Y
 			lda #$3f
 			sta $07ff
 			sta $07fe
@@ -1021,7 +1013,6 @@ _ass_setup:
 ;void cursor_on(void);
 ;void cursor_off(void);
 ;---------------------------------------------------------------------------------
-.export _cursor_on,_cursor_off
 
 _cursor_on:		lda _players
 			beq oneplayer_on
@@ -1030,13 +1021,12 @@ _cursor_on:		lda _players
 oneplayer_on:		lda #$80
 			.byte $2c
 _cursor_off:		lda #0
-			sta $d015
+			sta VIC_SPR_ENA
 			rts		;17
 
 ;------------------------------------------------
 ;void __fastcall__ clone(char i, char j,char s);
 ;------------------------------------------------
-			.export _clone
 
 _clone:			sta sprite
 			jsr popa
@@ -1057,7 +1047,7 @@ _clone:			sta sprite
 			adc #$37
 			sta $07f8,y
 			lda _colortab,x
-			sta $d027,y
+			sta VIC_SPR0_COLOR,y
 
 			tya
 			asl
@@ -1067,17 +1057,17 @@ _clone:			sta sprite
 			jsr mult24	;j*24
 			clc
 			adc #40		;+8*XOFFS + 24
-			sta $d000,y
+			sta VIC,y
 
 			pla
 			jsr mult24
 			adc #50
-			sta $d001,y
+			sta VIC_SPR0_Y,y
 			lda sprite
 			clc
 			adc #1
-			ora $d015
-			sta $d015
+			ora VIC_SPR_ENA
+			sta VIC_SPR_ENA
 			rts
 
 mult24:			sta add+1
@@ -1094,7 +1084,6 @@ add:			adc #0
 ;---------------------------------------------------------------------------------
 ;void __fastcall__ print3x3(char symbol,char x,char y);
 ;---------------------------------------------------------------------------------
-			.export _print3x3
 
 			;_print3x3: c-interface
 
@@ -1176,11 +1165,10 @@ p3x3_skip:		iny
 ;---------------------------------------------------------------------------------
 ;void broesel(void);
 ;---------------------------------------------------------------------------------
-			.export _broesel
 
 _broesel:		jsr _kill_joker
 			lda #0
-			sta $d015
+			sta VIC_SPR_ENA
 			lda #64
 			sta br_i
 
@@ -1210,7 +1198,6 @@ br_loop:		jsr _random
 ;---------------------------------------------------------------------------------
 ;void appear(void);
 ;---------------------------------------------------------------------------------
-			.export _appear
 
 _appear:		lda #64
 			sta br_i
@@ -1253,7 +1240,6 @@ app_loop:		jsr _random
 ;---------------------------------------------------------------------------------
 ;void fill(void);
 ;---------------------------------------------------------------------------------
-			.export _fill
 
 _fill:			lda #$ff
 			ldx #0
@@ -1267,32 +1253,29 @@ _fill:			lda #$ff
 ;---------------------------------------------------------------------------------
 ;vpod gfx_mode(void);
 ;---------------------------------------------------------------------------------
-			.export _gfx_mode
 
 _gfx_mode:		jsr _fill
 			lda #$18
-			sta $d016
+			sta VIC_CTRL2
 			lda #$30
 			jmp _setgfx
 ;---------------------------------------------------------------------------------
 ;void txt_mode(void);
 ;---------------------------------------------------------------------------------
-			.export _txt_mode
 
 _txt_mode:		jsr _kill_joker
 			lda #0
-			sta $d015
+			sta VIC_SPR_ENA
 			lda #8
-			sta $d016
+			sta VIC_CTRL2
 			lda #$1b
-			sta $d011
+			sta VIC_CTRL1
 			jsr _fill
 			lda #$38
 			jmp _setgfx
 ;---------------------------------------------------------------------------------
 ;void kill_joker(void);
 ;---------------------------------------------------------------------------------
-			.export _kill_joker
 
 _kill_joker:		lda _joker
 			beq @end
@@ -1323,7 +1306,6 @@ _kill_joker:		lda _joker
 ;---------------------------------------------------------------------------------
 ;unsigned char get_random_symb(void);
 ;---------------------------------------------------------------------------------
-			.export _get_random_symb
 
 _get_random_symb:	jsr _random
 			cmp _animals
@@ -1333,7 +1315,6 @@ _get_random_symb:	jsr _random
 ;---------------------------------------------------------------------------------
 ;void fill_matrix(void);
 ;---------------------------------------------------------------------------------
-			.export _fill_matrix
 
 _fill_matrix:		jsr _inter_irq
 
@@ -1349,13 +1330,13 @@ _fill_matrix:		jsr _inter_irq
 			bne @lp1
 
 			lda #1
-			sta $d015
-			sta $d017
-			sta $d01d
+			sta VIC_SPR_ENA
+			sta VIC_SPR_EXP_Y
+			sta VIC_SPR_EXP_X
 			ldx #160
-			stx $d000
+			stx VIC_SPR0_X
 			ldx #144
-			stx $d001
+			stx VIC_SPR0_Y
 
 @loop:			inc hugo
 			lda hugo
@@ -1365,7 +1346,7 @@ _fill_matrix:		jsr _inter_irq
 			clc
 			adc #$37
 			sta $07f8
-			stx $d027
+			stx VIC_SPR0_COLOR
 
 			ldx #63
 :			jsr _get_random_symb
@@ -1386,7 +1367,7 @@ _fill_matrix:		jsr _inter_irq
 			clc
 			adc #$37
 			sta $07f8
-			stx $d027
+			stx VIC_SPR0_COLOR
 
 			ldx #$27
 			lda #$ff
@@ -1396,25 +1377,25 @@ _fill_matrix:		jsr _inter_irq
 
 			jsr _wait_for_key_or_joy
 			lda #0
-			sta $d015
-			sta $d017
-			sta $d01d
+			sta VIC_SPR_ENA
+			sta VIC_SPR_EXP_Y
+			sta VIC_SPR_EXP_X
 			jsr _fill
 			jsr _game_irq
 			jmp _gfx_mode
 
 
-irq_x:			asl $d019
+irq_x:		asl VIC_IRR
 
 			lda #$1b
-			sta $d018
+			sta VIC_VIDEO_ADR
 
 			lda #255
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
 
 			lda #$1f
-			sta $d018
+			sta VIC_VIDEO_ADR
 
 			jsr $1003
 			jmp out3
@@ -1422,7 +1403,6 @@ irq_x:			asl $d019
 ;------------------------------------------------------------
 ;void __fastcall__ plot_score(unsigned int sc,char x,char y);
 ;------------------------------------------------------------
-			.export _plot_score
 
 _plot_score:		tay
 			lda tab_lo,y
@@ -1501,7 +1481,6 @@ ps_coltab2:		.byte 1,2
 ;---------------------------------------------------------------------------------
 ;void load_hs(void);
 ;---------------------------------------------------------------------------------
-			.export _load_hs
 
 _load_hs:		jmp (_load_vector)
 			lda #1
@@ -1519,7 +1498,6 @@ _load_hs:		jmp (_load_vector)
 ;---------------------------------------------------------------------------------
 ;void save_hs(void);
 ;---------------------------------------------------------------------------------
-			.export _save_hs
 
 _save_hs:		jmp (_save_vector)
 			lda #<_highscore
@@ -1542,7 +1520,6 @@ _save_hs:		jmp (_save_vector)
 ;---------------------------------------------------------------------------------
 ;unsigned char yesno(void)
 ;---------------------------------------------------------------------------------
-			.export _yesno
 
 _yesno:		jsr $ffe4
 			cmp #'l'
@@ -1556,7 +1533,6 @@ ys_yes:			lda #1
 ;--------------------------------------------------------------------
 ;void move_matrix(void)
 ;--------------------------------------------------------------------
-.export _move_matrix
 
 _move_matrix:
 			.proc move_matrix
@@ -1589,7 +1565,7 @@ _move_matrix:
 @endwhile:		lda #0		;s = 0;
 			sta spr
 			lda #$c0	;vic->spr_ena = 0xc0;
-			sta $d015
+			sta VIC_SPR_ENA
 
 			lda rows	;for (k=i;k!=255;--k)
 			sta temp_k
@@ -1635,7 +1611,7 @@ _move_matrix:
 			lda #$37
 			sta $07f8,y	;spr_ptr[s] = 0x37;
 			lda #1
-			sta $d027,y	;*(char*)(0xd027 + s) = 1;
+			sta VIC_SPR0_COLOR,y	;*(char*)(0xd027 + s) = 1;
 			lda #0
 			sta _joker	;joker = 0;
 			lda _joker_y
@@ -1652,7 +1628,7 @@ _move_matrix:
 			ldy spr
 			sta $07f8,y	;spr_ptr[s] = 0x37 + matrix[k][j];
 			lda _colortab,x
-			sta $d027,y	;*(char*)(0xd027+s) = colortab[matrix[k][j]];
+			sta VIC_SPR0_COLOR,y	;*(char*)(0xd027+s) = colortab[matrix[k][j]];
 
 @endif4:		lda spr
 			asl
@@ -1661,7 +1637,7 @@ _move_matrix:
 			jsr mult24	;j*24
 			clc
 			adc #40
-			sta $d000,y	;*(char*)(0xd000 + 2*s) = 24+XOFFS*8+j*24;
+			sta VIC,y	;*(char*)(0xd000 + 2*s) = 24+XOFFS*8+j*24;
 			lda temp_k
 			sec
 			sbc depth
@@ -1669,7 +1645,7 @@ _move_matrix:
 			jsr mult24
 			clc
 			adc #50
-			sta $d001,y	;*(char*)(0xd001 + 2*s) = 50 + (k - depth)*24;
+			sta VIC_SPR0_Y,y	;*(char*)(0xd001 + 2*s) = 50 + (k - depth)*24;
 			plp		;if (k-depth >= 0)
 			bcc @endif3
 			ldx spr
@@ -1678,8 +1654,8 @@ _move_matrix:
 			bmi @ex
 			asl
 			jmp @loop
-@ex:			ora $d015
-			sta $d015	;vic->spr_ena = tab[s];
+@ex:			ora VIC_SPR_ENA
+			sta VIC_SPR_ENA	;vic->spr_ena = tab[s];
 
 @endif3:		inc spr		;++s;
 			dec temp_k
@@ -1705,48 +1681,48 @@ _move_matrix:
 			bne @endif5
 			lda #6
 			sta spr
-			lda $d015
+			lda VIC_SPR_ENA
 			asl
 			ora #$c1
-			sta $d015
+			sta VIC_SPR_ENA
 
-@endif5:		lda $d00b
+@endif5:		lda VIC_SPR5_Y
 			clc
 			adc #4
-			sta $d00b
-			lda $d009
+			sta VIC_SPR5_Y
+			lda VIC_SPR4_Y
 			clc
 			adc #4
-			sta $d009
-			lda $d007
+			sta VIC_SPR4_Y
+			lda VIC_SPR3_Y
 			clc
 			adc #4
-			sta $d007
-			lda $d005
+			sta VIC_SPR3_Y
+			lda VIC_SPR2_Y
 			clc
 			adc #4
-			sta $d005
-			lda $d003
+			sta VIC_SPR2_Y
+			lda VIC_SPR1_Y
 			clc
 			adc #4
-			sta $d003
-			lda $d001
+			sta VIC_SPR1_Y
+			lda VIC_SPR0_Y
 			clc
 			adc #4
-			sta $d001
+			sta VIC_SPR0_Y
 
-			lda $d001
+			lda VIC_SPR0_Y
 			sta bck
 			cmp #(50+5*24)	;if((bck1 = *(char*)0xd0019 >= 50+5*24)
 			jcc  @else3
 			ldx $07f8
-			ldy $d027
+			ldy VIC_SPR0_COLOR
 			stx bck+1
 			sty bck+2
 
-			lda $d003
+			lda VIC_SPR1_Y
 			ldx $07f9
-			ldy $d028
+			ldy VIC_SPR1_COLOR
 			sta bck+3
 			stx bck+4
 			sty bck+5
@@ -1761,7 +1737,7 @@ _move_matrix:
 			adc #$37
 			sta $07f8	;spr_ptr[0] = matrix[0][j] + 0x37
 			lda _colortab,x	;*(char*)0xd027 = colortab[matrix[0][j]];
-			sta $d027
+			sta VIC_SPR0_COLOR
 
 			lda rows
 			cmp #7
@@ -1777,22 +1753,22 @@ _move_matrix:
 			adc #$37
 			sta $07f9
 			lda _colortab,x
-			sta $d028
+			sta VIC_SPR1_COLOR
 
-			lda $d001
+			lda VIC_SPR0_Y
 			sec
 			sbc #(7*24)
-			sta $d001
-			lda $d003
+			sta VIC_SPR0_Y
+			lda VIC_SPR1_Y
 			sec
 			sbc #(5*24)
-			sta $d003
+			sta VIC_SPR1_Y
 			jmp @end_plex
 
-@plex7:			lda $d001
+@plex7:			lda VIC_SPR0_Y
 			sec
 			sbc #(6*24)
-			sta $d001
+			sta VIC_SPR0_Y
 
 @end_plex:		lda #120
 			jsr _wait
@@ -1800,15 +1776,15 @@ _move_matrix:
 			lda bck
 			ldx bck+1
 			ldy bck+2
-			sta $d001
+			sta VIC_SPR0_Y
 			stx $07f8
-			sty $d027
+			sty VIC_SPR0_COLOR
 			lda bck+3
 			ldx bck+4
 			ldy bck+5
-			sta $d003
+			sta VIC_SPR1_Y
 			stx $07f9
-			sty $d028
+			sty VIC_SPR1_COLOR
 			jmp @end_for
 @else3:			lda #255
 			jsr _wait
@@ -1862,14 +1838,12 @@ get_matrix:		stx @add+1
 			lda _matrix,y
 			rts
 
-			.export _getkey
 _getkey:		jsr $ffcc
 			jmp $ffe4
 
 ;---------------------------------------------------------------------------------
 ;unsigned char __fastcall__ check_moves(void);
 ;---------------------------------------------------------------------------------
-			.export _check_moves
 
 _check_moves:
 
@@ -1971,7 +1945,6 @@ swap_v:			jsr get_matrix
 ;--------------------------------------------------------------------------
 ;void __fastcall__ put2cue(char);
 ;--------------------------------------------------------------------------
-			.export _put2cue
 
 _put2cue:		ldx _cue_max
 			cpx #16
@@ -1982,7 +1955,6 @@ _put2cue:		ldx _cue_max
 ;--------------------------------------------------------------------------
 ;unsigned char getfromcue(void);
 ;--------------------------------------------------------------------------
-			.export _getfromcue
 
 _getfromcue:		lda _cue_max
 			beq @exit
@@ -2001,7 +1973,6 @@ _getfromcue:		lda _cue_max
 ;---------------------------------------------------------------------------------
 ;void __fastcall__ do_bar(char);
 ;---------------------------------------------------------------------------------
-			.export _do_bar
 
 _do_bar:		clc
 			adc #(55+18*8)
@@ -2016,22 +1987,21 @@ _do_bar:		clc
 			tay
 			ldx @tab,y
 			pla
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
-			stx $d021
+			stx VIC_BG_COLOR0
 			clc
 			adc #1
 			ldx #8
-			cmp $d012
+			cmp VIC_HLINE
 			bne *-3
-			stx $d021
+			stx VIC_BG_COLOR0
 			rts
 @delay:			.byte 0
 @tmp:			.byte 0
 @tab:			.byte 0,11,12,15,1,15,12,11
 
 
-			.export _delay
 
 _delay:			tax
 			lda #100
@@ -2043,22 +2013,15 @@ _delay:			tax
 ;---------------------------------------------------------------------------------
 ;void screen_off(void); void screen_on(void)
 ;---------------------------------------------------------------------------------
-			.export _screen_off, _screen_on
 
 _screen_off:		lda #$0b
 			.byte $2c
 _screen_on:		lda #$1b
-			sta $d011
+			sta VIC_CTRL1
 			rts
 ;---------------------------------------------------------------------------------
 ;variables, tables, data...
 ;---------------------------------------------------------------------------------
-.export _key,_timer_delay,_stop,_time_out,_joker_tmp,_joker,_animals,_level
-.export _xpos1,_xpos2,_ypos1,_ypos2,_xdir1,_xdir2,_ydir1,_ydir2
-.export _load_vector,_save_vector,_time1,_players,_joker_x,_joker_y
-.export _pm_x1,_pm_x2,_pm_y1,_pm_y2
-.export _cue,_cue_max,_demo,_pl, _team, _tt
-.export _fld_done
 
 bck:			.res 6
 _cue:			.res 16

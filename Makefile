@@ -13,6 +13,7 @@ LD:=ld65
 CONFIG:=conf/zoo.cfg
 DISKIMAGE:=zoo.d64
 HISCOREFILE:=data/zoo.hi
+ASMINC=/usr/share/cc65/asminc # not really needed but I like being explicit
 
 all: $(PRG) $(DISKIMAGE)
 
@@ -31,7 +32,7 @@ $(PRG): $(OBJECTS) $(CONFIG)
 	# -g 		Generate debug info (will not end up in executablbe, so is fine to keep)
 	# -t c64 	target platform `c64` (for character code conversion)
 	# -o		The output file
-	$(CA) -g -t c64 -o $@ $<
+	$(CA) -g -t c64 --include-dir $(ASMINC) -o $@ $<
 
 %.s: %.c
 	# C Compiler: Generate .s from .c source code files
