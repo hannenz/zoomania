@@ -1,7 +1,7 @@
 # ----------------------------------------------
 # Makefile
 # ----------------------------------------------
-# @author Johannes Braun <johannes.braun@swu.de>
+# @author Johannes Braun <hannenz@posteo.de>
 # @package zoo
 # @version 2024-06-09
 # ----------------------------------------------
@@ -17,6 +17,10 @@ HISCOREFILE:=data/zoo.hi
 all: $(PRG) $(DISKIMAGE)
 
 $(PRG): $(OBJECTS) $(CONFIG)
+	# Link all together
+	# -Ln zoo.lbl 	Generate a label file which can be used in Vice Monitor (type "ll zoo.lbl" in monitor to load and use it)
+	# -o 			The output file
+	# -C 			Use custom config file for memroy and file layout
 	$(LD) -Ln zoo.lbl -o $@ -C $(CONFIG) $(OBJECTS) c64.lib
 
 # Disable (cancel) make's implicit rule
