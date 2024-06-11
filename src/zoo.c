@@ -1,7 +1,7 @@
 /**
  * zoo.c
  *
- * @author Johannes Braun <johannes.braun@swu.de>
+ * @author Johannes Braun <hannenz@posteo.de>
  * @package zoo
  * @version 2024-06-09
  *
