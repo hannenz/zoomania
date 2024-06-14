@@ -11,13 +11,14 @@ CC:=cc65
 CA:=ca65
 LD:=ld65
 CONFIG:=conf/zoo.cfg
+DATA:=data/zoo.dat data/zootitle.pic
 DISKIMAGE:=zoo.d64
 HISCOREFILE:=data/zoo.hi
-ASMINC=/usr/share/cc65/asminc # not really needed but I like being explicit
+ASMINC:=/usr/share/cc65/asminc # not really needed but I like being explicit
 
 all: $(PRG) $(DISKIMAGE)
 
-$(PRG): $(OBJECTS) $(CONFIG)
+$(PRG): $(OBJECTS) $(CONFIG) $(DATA)
 	# Link all together
 	# -Ln zoo.lbl 	Generate a label file which can be used in Vice Monitor (type "ll zoo.lbl" in monitor to load and use it)
 	# -o 			The output file
