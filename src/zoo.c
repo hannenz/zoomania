@@ -12,7 +12,7 @@
  * - kernal mssg bei load abschalten!
  */
 #include "zoo.h"
-#define LINES 25
+#define LINES 17
 
 //print a 2x2 number to x/y with n digits
 void __fastcall__ print_num(unsigned long sc, char n, char x, char y) {
