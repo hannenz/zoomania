@@ -1,4 +1,7 @@
-*** This Project has moved to Codeberg: https://codeberg.org/hannenz/zoomania ***
+!note
+ *** This Project has been moved to Codeberg: [https://codeberg.org/hannenz/zoomania]() ***
+
+
 
 ```
  ________   ___    __  __    _    _   _ ___    _    
