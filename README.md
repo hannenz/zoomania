@@ -34,6 +34,7 @@ Makefile, so you can just type `make` to build the game.
 zootitle.pic
 
 | File            | Memory | Description   |
+| ---             | ---    | ---           |
 | 0x0000 - 0x1540 | 0xE000 | Bitmap        |
 | 0x1540 - 0x17E8 | 0xCC00 | Screen-RAM    |
 | 0x17E8 - 0x1a90 | 0xD800 | Color-RAM     |
@@ -43,6 +44,7 @@ zootitle.pic
 zoo.dat
 
 | File            | Memory | Description                     |
+| ---             | ---    | ---                             |
 | 0x0000 - 0x0001 | -      | Load Address                    |
 | 0x0002 - 0x0241 | 0x0DC0 | 9 Sprites: 8 Animals + 1 Cursor |
 | 0x0242 - 0x1ADF | 0x1000 | Music                           |
